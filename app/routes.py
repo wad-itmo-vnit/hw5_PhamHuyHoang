@@ -39,7 +39,6 @@ def main():
 @app.route("/index")
 @login
 def index():
-    print(333333)
     return render_template("index.html")
 
 @app.route("/signIn", methods=['POST','GET'])
@@ -95,3 +94,29 @@ def logOut():
     res.delete_cookie('token')
     return res
 
+
+
+@app.route("/changePass", methods=['GET','POST'])
+@login
+def changePass():
+    if request.method == 'GET':
+        return render_template("changePass.html")
+    
+    elif request.method == 'POST':
+        account = User.read_data(request.cookies.get('user'))
+        currentPassword, newPassword, confirmPassword = request.form.get('currentPass'), request.form.get('newPass'), request.form.get('confirmPass')
+        if account.check_password(currentPassword):
+            if newPassword == confirmPassword:
+                account.hash_password(newPassword)
+                account.delete_session()
+                flash('Successful Change!!!')
+                res = make_response(redirect('/signIn'))
+                res.delete_cookie('user')
+                res.delete_cookie('token')
+                return res   
+            else:
+                flash('Password do not match !!')
+                return redirect('/changePass')
+        else:
+            flash('Invalid password!!!')
+            return redirect('/changePass')
